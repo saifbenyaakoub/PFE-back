@@ -1,0 +1,37 @@
+const {
+  getAllServices,
+  getServiceById,
+} = require("../model/service");
+
+// GET all services
+const fetchAllServices = async (req, res) => {
+  try {
+    const services = await getAllServices();
+    res.json(services);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+// GET service by id
+const fetchServiceById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const service = await getServiceById(id);
+
+    if (!service) {
+      return res.status(404).json("Service not found");
+    }
+
+    res.json(service);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+module.exports = {
+  fetchAllServices,
+  fetchServiceById,
+};
