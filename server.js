@@ -10,6 +10,7 @@ app.use(express.json());
 
 // Use routes
 app.use("/services", serviceRoutes);
+app.use("/tasks", require("./router/tasksRouter"));
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");
