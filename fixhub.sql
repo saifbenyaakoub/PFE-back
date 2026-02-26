@@ -24,6 +24,30 @@ CREATE TABLE providers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE services (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255),
+    description VARCHAR(255),
+    category VARCHAR(255),
+    provider_name VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    governorate VARCHAR(255),
+    rate DECIMAL(2,1)
+);
+
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255),
+    description VARCHAR(255),
+    category VARCHAR(255),
+    client_name VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    governorate VARCHAR(255),
+    postDate DATE
+);
+
+
+
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_clients_user_id ON clients(user_id);
 CREATE INDEX idx_providers_user_id ON providers(user_id);
