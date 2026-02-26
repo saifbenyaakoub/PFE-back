@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS citext;
 
 CREATE TABLE users (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    full_name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     email CITEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     role VARCHAR(50) NOT NULL CHECK (role IN ('client', 'provider')),
