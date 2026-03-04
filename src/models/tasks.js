@@ -2,7 +2,18 @@ const pool = require("../config/db");
 
 // Get all services
 const getAllTasks = async () => {
-  const result = await pool.query("SELECT * FROM tasks");
+  const result = await pool.query(`SELECT 
+  t.id,
+  t.title,
+  t.description,
+  t.category,
+  t.status,
+  u.full_name AS client_name,
+  c.city AS governorate
+FROM tasks t
+JOIN clients c ON t.client_id = c.id
+JOIN users u ON c.user_id = u.id
+ORDER BY t.id;`);
   return result.rows;
 };
 

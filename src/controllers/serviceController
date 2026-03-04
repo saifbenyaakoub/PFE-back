@@ -2,27 +2,35 @@ const {
   getAllServices,
   getServiceById,
 } = require("../models/service");
-const ApiError = require("../utils/apiError");
-const ApiResponse = require("../utils/apiResponse");
-const asyncHandler = require("../utils/asyncHandler");
 
 // GET all services
-const fetchAllServices = asyncHandler(async (req, res) => {
-  const services = await getAllServices();
-  res.json(new ApiResponse(200, services, "Services fetched successfully"));
-});
+const fetchAllServices = async (req, res) => {
+
+  try {
+    const services = await getAllServices();
+    res.json(services);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
 
 // GET service by id
-const fetchServiceById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const service = await getServiceById(id);
+const fetchServiceById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const service = await getServiceById(id);
 
-  if (!service) {
-    throw new ApiError(404, "Service not found");
+    if (!service) {
+      return res.status(404).json("Service not found");
+    }
+
+    res.json(service);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
   }
-
-  res.json(new ApiResponse(200, service, "Service fetched successfully"));
-});
+};
 
 module.exports = {
   fetchAllServices,

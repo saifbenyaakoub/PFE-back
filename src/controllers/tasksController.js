@@ -2,27 +2,34 @@ const {
   getAllTasks,
   getTaskById,
 } = require("../models/tasks");
-const ApiError = require("../utils/apiError");
-const ApiResponse = require("../utils/apiResponse");
-const asyncHandler = require("../utils/asyncHandler");
 
 // GET all tasks
-const fetchAllTasks = asyncHandler(async (req, res) => {
-  const tasks = await getAllTasks();
-  res.json(new ApiResponse(200, tasks, "Tasks fetched successfully"));
-});
-
-// GET task by id
-const fetchTasksById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const task = await getTaskById(id);
-
-  if (!task) {
-    throw new ApiError(404, "Task not found");
+const fetchAllTasks = async (req, res) => {
+  try {
+    const tasks = await getAllTasks();
+    res.json(tasks);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
   }
+};
 
-  res.json(new ApiResponse(200, task, "Task fetched successfully"));
-});
+// GET service by id
+const fetchTasksById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const task = await getTaskById(id);
+
+    if (!task) {
+      return res.status(404).json("Task not found");
+    }
+
+    res.json(service);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
 
 module.exports = {
   fetchAllTasks,
