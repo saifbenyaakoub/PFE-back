@@ -24,7 +24,7 @@ const fetchTasksById = async (req, res) => {
       return res.status(404).json("Task not found");
     }
 
-    res.json(service);
+    res.json(task);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");

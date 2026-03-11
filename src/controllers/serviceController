@@ -1,38 +1,32 @@
-const {
-  getAllServices,
-  getServiceById,
-} = require("../models/service");
+const { getAllServices, getServiceById } = require("../models/service");
 
-// GET all services
+// Get all services
 const fetchAllServices = async (req, res) => {
-
   try {
     const services = await getAllServices();
     res.json(services);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch services" });
   }
 };
 
-// GET service by id
+// Get single service by ID
 const fetchServiceById = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ error: "Invalid service ID" });
+  }
+
   try {
-    const { id } = req.params;
     const service = await getServiceById(id);
-
-    if (!service) {
-      return res.status(404).json("Service not found");
-    }
-
+    if (!service) return res.status(404).json({ error: "Service not found" });
     res.json(service);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch service" });
   }
 };
 
-module.exports = {
-  fetchAllServices,
-  fetchServiceById,
-};
+module.exports = { fetchAllServices, fetchServiceById };
