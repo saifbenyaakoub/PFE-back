@@ -3,7 +3,7 @@ const router = express.Router();
 const { createBooking, getAllBookings, getBookingById } = require("../models/bookingService");
 
 // POST /bookings - create a new booking
-router.post("/bookings", async (req, res) => {
+router.post("/", async (req, res) => {
   const { service_id, client_id, date, time, details } = req.body;
 
   if (!service_id || !client_id || !date || !time) {
@@ -19,8 +19,7 @@ router.post("/bookings", async (req, res) => {
   }
 });
 
-// GET /bookings - get all bookings
-router.get("/bookings", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const bookings = await getAllBookings();
     res.json(bookings);
@@ -30,8 +29,7 @@ router.get("/bookings", async (req, res) => {
   }
 });
 
-// GET /bookings/:id - get a single booking by ID
-router.get("/bookings/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const booking = await getBookingById(id);

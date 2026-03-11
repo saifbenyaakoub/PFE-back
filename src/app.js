@@ -6,6 +6,8 @@ const authRoutes = require("./routes/auth");
 const serviceRoutes = require("./routes/serviceRouter");
 const tasksRoutes = require("./routes/tasksRouter");
 const profileRoutes = require("./routes/profileRoutes");
+const bookingRouter = require("./routes/bookingServiceRouter");
+
 
 const app = express();
 
@@ -15,6 +17,7 @@ app.use(express.json());
 
 app.use("/services", serviceRoutes);
 app.use("/tasks", tasksRoutes);
+app.use("/bookings", bookingRouter);
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use("/api/auth", authRoutes);
