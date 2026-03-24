@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../db");
 
 exports.createClient = async (userId, city) => {
   await pool.query(

@@ -5,6 +5,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     email CITEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    profile_image TEXT,
     role VARCHAR(50) NOT NULL CHECK (role IN ('client', 'provider')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -45,6 +46,7 @@ CREATE TABLE tasks (
     CONSTRAINT tasks_status_check CHECK (status IN ('open', 'in_progress', 'completed', 'cancelled')),
     CONSTRAINT tasks_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
 );
+
 
 
 CREATE INDEX idx_users_email ON users(email);
