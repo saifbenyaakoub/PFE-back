@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../db");
 
 // Get all services
 const getAllTasks = async () => {

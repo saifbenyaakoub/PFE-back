@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const userModel = require("../models/user");
 const clientModel = require("../models/client");
 const providerModel = require("../models/provider");
+const serviceModel = require("../models/service");
 
 const JWT_SECRET = process.env.JWT_SECRET || "0123456789";
 
@@ -39,7 +40,15 @@ exports.signupProvider = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await userModel.createUser(name, email, hashedPassword, "provider");
-        await providerModel.createProvider(user.id, serviceCategory, city);
+        const provider = await providerModel.createProvider(user.id, serviceCategory, city);
+
+        // Automatically create a default service for the new provider
+        await serviceModel.createService({
+            title: serviceCategory || "General Service",
+            description: `Services provided by ${name}`,
+            category: serviceCategory,
+            provider_id: provider.id
+        });
 
         const token = jwt.sign({ userId: user.id, email: user.email, role: "provider" }, JWT_SECRET, { expiresIn: "10h" });
 

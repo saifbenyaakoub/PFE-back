@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../db");
 
 // Get all services
 const getAllServices = async () => {
@@ -36,4 +36,16 @@ const getServiceById = async (id) => {
   return result.rows[0];
 };
 
-module.exports = { getAllServices, getServiceById };
+// Create a new service
+const createService = async (serviceData) => {
+  const { title, description, category, provider_id } = serviceData;
+  const result = await pool.query(
+    `INSERT INTO services (title, description, category, provider_id)
+     VALUES ($1, $2, $3, $4)
+     RETURNING *`,
+    [title, description, category, provider_id]
+  );
+  return result.rows[0];
+};
+
+module.exports = { getAllServices, getServiceById, createService };

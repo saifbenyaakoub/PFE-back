@@ -70,3 +70,22 @@ CREATE TABLE bookings (
 CREATE INDEX idx_bookings_client_id ON bookings(client_id);
 CREATE INDEX idx_bookings_service_id ON bookings(service_id);
 CREATE INDEX idx_bookings_status ON bookings(status);
+
+CREATE TABLE conversations (
+    id SERIAL PRIMARY KEY,
+    user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Messages inside the conversation
+CREATE TABLE messages (
+    id SERIAL PRIMARY KEY,
+    conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    text TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index for faster queries
+CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
