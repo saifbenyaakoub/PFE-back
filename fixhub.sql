@@ -75,17 +75,21 @@ CREATE TABLE conversations (
     id SERIAL PRIMARY KEY,
     user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user1_id, user2_id)
 );
 
--- Messages inside the conversation
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     text TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Index for faster queries
+CREATE INDEX idx_conversations_user1 ON conversations(user1_id);
+CREATE INDEX idx_conversations_user2 ON conversations(user2_id);
 CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX idx_messages_sender ON messages(sender_id);
