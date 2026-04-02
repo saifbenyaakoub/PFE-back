@@ -32,6 +32,8 @@ CREATE TABLE services (
     description TEXT NOT NULL,
     category VARCHAR(255),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT true,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_provider FOREIGN KEY (provider_id) REFERENCES providers(id),
     CONSTRAINT services_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE
 );
@@ -57,6 +59,7 @@ CREATE TABLE bookings (
     id SERIAL PRIMARY KEY,
     service_id INTEGER NOT NULL
         REFERENCES services(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2),
     client_id INTEGER NOT NULL
         REFERENCES clients(id) ON DELETE CASCADE,
     date DATE NOT NULL,
@@ -65,6 +68,16 @@ CREATE TABLE bookings (
     status VARCHAR(50) DEFAULT 'pending'
         CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE reviews (
+  id          SERIAL PRIMARY KEY,
+  booking_id  INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  client_id   INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  rating      INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment     TEXT,
+  created_at  TIMESTAMP DEFAULT NOW(),
+  UNIQUE(booking_id)
 );
 
 CREATE INDEX idx_bookings_client_id ON bookings(client_id);
@@ -93,3 +106,8 @@ CREATE INDEX idx_conversations_user1 ON conversations(user1_id);
 CREATE INDEX idx_conversations_user2 ON conversations(user2_id);
 CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX idx_messages_sender ON messages(sender_id);
+CREATE INDEX idx_reviews_booking ON reviews(booking_id);
+CREATE INDEX idx_reviews_client ON reviews(client_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_client_id ON reviews(client_id);
+ALTER TABLE services 
+ADD CONSTRAINT unique_provider_service_title UNIQUE (provider_id, title);

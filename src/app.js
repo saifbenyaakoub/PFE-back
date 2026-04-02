@@ -15,6 +15,13 @@ const authRoutes = require("./auth");
 const profileRoutes = require("./routes/profileRouter");
 const chatRouter = require("./routes/chatRouter");
 
+//const bookingsRoutes  = require('./routes/bookings');
+const servicesRoutes  = require('./routes/services');
+const reviewsRoutes   = require('./routes/reviews');
+//const savedRoutes     = require('./routes/saved');
+const dashboardRoutes = require('./routes/dashboard');
+const { authenticateToken } = require('./middleware/authMiddleware');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -34,8 +41,14 @@ const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
-  },
-});
+  },})
+//app.use('/bookings',  authenticateToken, bookingsRoutes);
+app.use('/services',  authenticateToken, servicesRoutes);
+app.use('/reviews',   authenticateToken, reviewsRoutes);
+//app.use('/saved',     authenticateToken, savedRoutes);
+app.use('/dashboard', authenticateToken, dashboardRoutes);
+
+
 
 io.on("connection", (socket) => {
   console.log("✅ Socket connected:", socket.id);

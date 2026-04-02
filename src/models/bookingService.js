@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../db");
 
 // Create booking
 const createBooking = async (service_id, client_id, date, time, details) => {

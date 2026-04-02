@@ -73,9 +73,9 @@ exports.signin = async (req, res) => {
             return res.status(400).json({ error: "Invalid credentials." });
         }
 
-        const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "10h" });
+        const token = jwt.sign({ userId: user.id, email: user.email, role: user.role , profileImage: user.profile_image}, JWT_SECRET, { expiresIn: "10h" });
 
-        res.status(200).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+        res.status(200).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role , profileImage: user.profile_image} });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Server error during signin" });

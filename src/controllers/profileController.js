@@ -10,7 +10,7 @@ exports.getProfile = async (req, res) => {
         }
 
    
-        const result = await pool.query("SELECT id, name, email, role,profile_image FROM users WHERE id = $1", [userId]);
+        const result = await pool.query("SELECT id, name, email, role, profile_image FROM users WHERE id = $1", [userId]);
       
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "User not found" });
@@ -51,9 +51,9 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
        const {userId}=req.params;
-        console.log("🚀 ~ userId:", userId)
+        
         const { name, email, city, categories,role } = req.body;
-        console.log("🚀 ~ req.body:", req.body)
+        
 
         await pool.query("UPDATE users SET name = $1, email = $2 WHERE id = $3", [name, email, userId]);
 
@@ -89,14 +89,14 @@ exports.uploadProfileImage = async (req, res) => {
             "UPDATE users SET profile_image = $1 WHERE id = $2",
             [filename, userId]
         );
-    console.log("🚀 ~ resultQuery:", resultQuery.rowCount)
+    
 if(resultQuery.rowCount>0)
       {
         const result ={
             success: true,
             imageUrl: `http://localhost:5000/uploads/${filename}`
         }
-        console.log("🚀 ~ result:", result)
+        
         res.status(200).json(result);}else{
             res.status(403).json({ error: "there is an error" }); 
         }
