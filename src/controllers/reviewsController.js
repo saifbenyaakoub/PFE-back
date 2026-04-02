@@ -3,7 +3,8 @@ const catchAsync = require("../utils/catchAsync");
 const ApiError = require("../utils/apiError");
 
 exports.getProviderReviews = catchAsync(async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.params.userId
+    console.log("🚀 ~ userId:", req.params)
 
     const query = `
     SELECT 
@@ -22,7 +23,7 @@ exports.getProviderReviews = catchAsync(async (req, res) => {
     WHERE p.user_id = $1
     ORDER BY r.created_at DESC
   `;
-
+    console.log("userid : ",userId);
     const { rows } = await pool.query(query, [userId]);
 
     return res.status(200).json({
@@ -32,7 +33,8 @@ exports.getProviderReviews = catchAsync(async (req, res) => {
 });
 
 exports.getRatingSummary = catchAsync(async (req, res) => {
-    const userId = req.user.id;
+       const userId = req.params.userId;
+       console.log("🚀 ~ userId:", userId)
 
     const query = `
     SELECT 
@@ -51,6 +53,7 @@ exports.getRatingSummary = catchAsync(async (req, res) => {
   `;
 
     const { rows } = await pool.query(query, [userId]);
+    console.log("🚀 ~ rows:", rows)
 
     return res.status(200).json({
         success: true,

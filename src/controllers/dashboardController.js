@@ -27,7 +27,6 @@ exports.getStats = catchAsync(async (req, res, next) => {
       return next(new ApiError('Provider profile not found', 404));
     }
     const providerId = providerRes.rows[0].id;
-    console.log("🚀 ~ providerId:", providerId)
 
     // Total des gains sur les bookings complétés
     const earningsRes = await db.query(`
@@ -37,7 +36,6 @@ exports.getStats = catchAsync(async (req, res, next) => {
       WHERE s.provider_id = $1
         AND b.status = 'completed'
     `, [providerId]);
-    console.log("🚀 ~ earningsRes:", earningsRes)
 
     // Nombre de jobs complétés
     const completedRes = await db.query(`
