@@ -1,9 +1,8 @@
-const pool = require("../config/db");
+const pool = require("../../db");
 
 const ChatModel = {
   // Find or create a conversation between two users
   async findOrCreateConversation(userId1, userId2) {
-    // Always store smaller id as user1_id for uniqueness
     const [u1, u2] = userId1 < userId2 ? [userId1, userId2] : [userId2, userId1];
 
     const existing = await pool.query(
@@ -19,28 +18,24 @@ const ChatModel = {
     return result.rows[0];
   },
 
-  // Get all conversations for a user with last message + partner info + unread count
+  // Get all conversations for a user with last message + partner info
   async getConversations(userId) {
     const query = `
-      SELECT
-        c.id,
+      SELECT 
+        c.id, 
         c.created_at,
-        c.updated_at,
         CASE WHEN c.user1_id = $1 THEN u2.name ELSE u1.name END AS other_user_name,
         CASE WHEN c.user1_id = $1 THEN u2.id   ELSE u1.id   END AS other_user_id,
         CASE WHEN c.user1_id = $1 THEN u2.profile_image ELSE u1.profile_image END AS other_user_image,
         CASE WHEN c.user1_id = $1 THEN u2.role ELSE u1.role END AS other_user_role,
-        m.text       AS last_message,
+        m.content AS last_message,
         m.created_at AS last_message_time,
-        m.sender_id  AS last_message_sender_id,
-        (SELECT COUNT(*) FROM messages
-         WHERE conversation_id = c.id AND sender_id != $1 AND is_read = false
-        )::int AS unread_count
+        m.sender_id AS last_message_sender_id
       FROM conversations c
       JOIN users u1 ON c.user1_id = u1.id
       JOIN users u2 ON c.user2_id = u2.id
       LEFT JOIN LATERAL (
-        SELECT text, created_at, sender_id FROM messages
+        SELECT content, created_at, sender_id FROM messages
         WHERE conversation_id = c.id
         ORDER BY created_at DESC LIMIT 1
       ) m ON true
@@ -52,17 +47,13 @@ const ChatModel = {
   },
 
   // Save a new message
-  async createMessage(conversationId, senderId, text) {
+  async createMessage(conversationId, senderId, content) {
     const msg = await pool.query(
-      `INSERT INTO messages (conversation_id, sender_id, text)
+      `INSERT INTO messages (conversation_id, sender_id, content) 
        VALUES ($1, $2, $3) RETURNING *`,
-      [conversationId, senderId, text]
+      [conversationId, senderId, content]
     );
-    // Update conversation timestamp
-    await pool.query(
-      `UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      [conversationId]
-    );
+
     return msg.rows[0];
   },
 
@@ -77,16 +68,7 @@ const ChatModel = {
     `;
     const { rows } = await pool.query(query, [conversationId]);
     return rows;
-  },
-
-  // Mark messages as read
-  async markAsRead(conversationId, userId) {
-    await pool.query(
-      `UPDATE messages SET is_read = true
-       WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false`,
-      [conversationId, userId]
-    );
-  },
+  }
 };
 
 module.exports = ChatModel;
