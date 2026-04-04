@@ -101,7 +101,6 @@ if(resultQuery.rowCount>0)
             res.status(403).json({ error: "there is an error" }); 
         }
     } catch (error) {
-        console.log(error)
         console.error("UPLOAD PROFILE IMAGE ERROR:", error);
         res.status(500).json({ error: "Server error uploading image" });
     }

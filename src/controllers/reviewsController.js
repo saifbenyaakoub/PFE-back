@@ -4,37 +4,36 @@ const ApiError = require("../utils/apiError");
 
 exports.getProviderReviews = catchAsync(async (req, res) => {
     const userId = req.params.userId
-    console.log("🚀 ~ userId:", req.params)
 
     const query = `
     SELECT 
-     r.id,
-     r.rating,
-     r.comment,
-     r.created_at,
-     u.name AS client_name,
-     u.profile_image AS client_image,
-     s.title AS service_name
+    r.id,
+    r.rating,
+    r.comment,
+    r.created_at,
+    u.name AS client_name,
+    u.profile_image AS client_image,
+    s.title AS service_name
     FROM reviews r
-    JOIN users u      ON u.id = r.client_id
+    JOIN clients c    ON c.id = r.client_id  
+    JOIN users u      ON u.id = c.user_id     
     JOIN bookings b   ON b.id = r.booking_id
     JOIN services s   ON s.id = b.service_id
     JOIN providers p  ON p.id = s.provider_id
     WHERE p.user_id = $1
-    ORDER BY r.created_at DESC
+    ORDER BY r.created_at DESC;
   `;
-    console.log("userid : ",userId);
-    const { rows } = await pool.query(query, [userId]);
 
+    const { rows } = await pool.query(query, [userId]);
     return res.status(200).json({
         success: true,
         data: rows,
+        
     });
 });
 
 exports.getRatingSummary = catchAsync(async (req, res) => {
        const userId = req.params.userId;
-       console.log("🚀 ~ userId:", userId)
 
     const query = `
     SELECT 
@@ -53,7 +52,6 @@ exports.getRatingSummary = catchAsync(async (req, res) => {
   `;
 
     const { rows } = await pool.query(query, [userId]);
-    console.log("🚀 ~ rows:", rows)
 
     return res.status(200).json({
         success: true,

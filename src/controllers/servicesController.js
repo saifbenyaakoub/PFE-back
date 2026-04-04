@@ -4,15 +4,8 @@ const ApiError   = require('../utils/apiError');
 
 // HELPER — résoudre provider_id depuis user_id
 const getProviderId = async (userId) => {
-  console.log("Recherche du provider pour l'USER_ID :", userId);
   const res = await db.query('SELECT id FROM providers WHERE user_id = $1', [userId]);
-  
-  if (res.rows.length === 0) {
-    console.error("AUCUN provider trouvé en base pour cet ID.");
-  } else {
-    console.log("Provider trouvé ID :", res.rows[0].id);
-  }
-  
+
   return res.rows[0]?.id ?? null;
 };
 
@@ -73,11 +66,9 @@ exports.getServiceById = catchAsync(async (req, res, next) => {
 
 // POST /services
 exports.createService = catchAsync(async (req, res, next) => {
-  console.log("req.user:", req.user);
   const { title, category, description } = req.body;
   const userId = req.user.id || req.user.userId;
   const providerId = await getProviderId(userId);
-  console.log("providerid = ",providerId);
   if (!providerId) return next(new ApiError('Profil prestataire requis', 403));
 
   const { rows } = await db.query(

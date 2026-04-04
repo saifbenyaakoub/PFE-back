@@ -170,33 +170,83 @@ exports.getProviderDashboard = catchAsync(async (req, res, next) => {
     JOIN services s ON b.service_id = s.id
     WHERE s.provider_id = $1
   `, [providerId]);
-
-  // 5 dernières réservations avec infos client
-  const bookingsRes = await db.query(`
-    SELECT
-      b.*,
-      s.name         AS service_name,
-      u.name         AS client_name,
-      u.profile_image AS client_image
-    FROM bookings b
-    JOIN services s ON b.service_id  = s.id
-    JOIN clients  c ON b.client_id   = c.id
-    JOIN users    u ON c.user_id     = u.id
-    WHERE s.provider_id = $1
-    ORDER BY b.date DESC, b.time DESC
-    LIMIT 5
-  `, [providerId]);
-  console.log("hhhhhh");
   res.status(200).json({
     status: 'success',
     data: {
-      stats: statsRes.rows[0],
-      recentBookings: bookingsRes.rows,
+      stats: statsRes.rows[0]
     },
   });
 });
 
+exports.getBookingRequests = catchAsync(async (req, res, next) => {
+  const { userId } = req.params;
 
+  const providerRes = await db.query(
+    'SELECT id FROM providers WHERE user_id = $1',
+    [userId]
+  );
+
+  if (providerRes.rows.length === 0) {
+    return next(new ApiError('Provider non trouvé', 404));
+  }
+
+  const providerId = providerRes.rows[0].id;
+
+  const bookingsRes = await db.query(`
+    SELECT
+      b.id,
+      b.date,
+      b.time,
+      b.status,
+      b.amount,
+      b.details,
+      s.title AS service_name,
+
+      u.name AS client_name,
+      u.profile_image AS client_image
+
+    FROM bookings b
+    JOIN services s ON b.service_id = s.id
+    JOIN clients c ON b.client_id = c.id
+    JOIN users u ON c.user_id = u.id
+
+    WHERE s.provider_id = $1
+      AND b.status = 'pending'
+
+    ORDER BY b.date ASC, b.time ASC
+  `, [providerId]);
+
+  res.status(200).json({
+    status: 'success',
+    results: bookingsRes.rows.length,
+    data: bookingsRes.rows,
+  });
+});
+
+// Accepter la requête
+exports.acceptBooking = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await db.query(
+            "UPDATE bookings SET status = 'confirmed' WHERE id = $1 RETURNING *",
+            [id]
+        );
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: "Erreur lors de l'acceptation" });
+    }
+};
+
+// Refuser la requête
+exports.declineBooking = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query("DELETE FROM bookings WHERE id = $1", [id]);
+        res.status(200).json({ message: "Réservation supprimée" });
+    } catch (err) {
+        res.status(500).json({ error: "Erreur lors du refus" });
+    }
+};
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /dashboard/client/:userId
 //

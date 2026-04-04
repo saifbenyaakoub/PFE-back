@@ -10,8 +10,15 @@ router.use(authenticateToken);
 router.get('/stats/:userId', ctrl.getStats);
 
 // ── Routes complètes (stats + bookings récents) ───────────────────────────────
+
 // GET /dashboard/provider/:userId
 router.get('/provider/:userId', ctrl.getProviderDashboard);
+
+router.get('/provider/:userId/booking-requests', ctrl.getBookingRequests);
+
+// Dans routes/dashboard.js
+router.put('/bookings/:id/status', authenticateToken, ctrl.acceptBooking);
+router.delete('/bookings/:id', authenticateToken, ctrl.declineBooking);
 
 // GET /dashboard/client/:userId
 router.get('/client/:userId', ctrl.getClientDashboard);

@@ -15,7 +15,7 @@ const authRoutes = require("./auth");
 const profileRoutes = require("./routes/profileRouter");
 const chatRouter = require("./routes/chatRouter");
 
-//const bookingsRoutes  = require('./routes/bookings');
+const bookingsRoutes  = require('./routes/bookings');
 const servicesRoutes  = require('./routes/services');
 const reviewsRoutes   = require('./routes/reviews');
 //const savedRoutes     = require('./routes/saved');
@@ -42,7 +42,7 @@ const io = new Server(server, {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },})
-//app.use('/bookings',  authenticateToken, bookingsRoutes);
+app.use('/bookings',  authenticateToken, bookingsRoutes);
 app.use('/services',  authenticateToken, servicesRoutes);
 app.use('/reviews',   authenticateToken, reviewsRoutes);
 //app.use('/saved',     authenticateToken, savedRoutes);
