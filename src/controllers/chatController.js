@@ -41,7 +41,6 @@ const chatController = {
   async getChatHistory(req, res) {
     try {
       const { conversationId } = req.params;
-      // Removed markAsRead because the column doesn't exist in your DB yet
       const messages = await ChatModel.getMessages(conversationId);
       res.json(messages);
     } catch (err) {
@@ -52,7 +51,6 @@ const chatController = {
 
   async sendMessage(req, res) {
     try {
-      // Changed 'text' to 'content' to match frontend/database
       const { conversationId, content, userId } = req.body;
 
       if (!content || !content.trim()) {
@@ -71,6 +69,28 @@ const chatController = {
       res.status(500).json({ error: "Message failed" });
     }
   },
+
+  // ✅ NEW METHOD (FIXED)
+  async respondToQuotation(req, res) {
+    try {
+      const { messageId,content } = req.body;
+      console.log(`Backend: Responding to quotation with ID ${messageId} and content ${content}`);
+
+      if (!messageId || !content) {
+        return res.status(400).json({ error: "Missing data" });
+      }
+
+      const updatedMessage = await ChatModel.updateQuotationStatus(
+        messageId,
+        content
+      );
+
+      res.json(updatedMessage);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
 };
 
 module.exports = chatController;

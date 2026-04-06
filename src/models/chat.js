@@ -68,7 +68,21 @@ const ChatModel = {
     `;
     const { rows } = await pool.query(query, [conversationId]);
     return rows;
-  }
+  },
+  // Update quotation status (accept / decline)
+async updateQuotationStatus(messageId,content) {
+
+
+const req=`UPDATE messages
+   SET 
+  
+     content = '${content}'
+   WHERE id = ${messageId}
+   RETURNING *`
+   console.log(`Backend: Executing query to update quotation status: ${req}`);
+const result = await pool.query(req);
+return result.rows[0];
+}
 };
 
 module.exports = ChatModel;

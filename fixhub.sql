@@ -123,5 +123,11 @@ CREATE INDEX idx_messages_sender ON messages(sender_id);
 CREATE INDEX idx_reviews_booking ON reviews(booking_id);
 CREATE INDEX idx_reviews_client ON reviews(client_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_client_id ON reviews(client_id);
+
 ALTER TABLE services 
 ADD CONSTRAINT unique_provider_service_title UNIQUE (provider_id, title);
+
+ALTER TABLE messages
+ADD COLUMN status VARCHAR(50)
+CHECK (status IN ('pending', 'accepted', 'declined'))
+DEFAULT 'pending';
