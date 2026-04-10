@@ -225,27 +225,27 @@ exports.getBookingRequests = catchAsync(async (req, res, next) => {
 
 // Accepter la requête
 exports.acceptBooking = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const result = await db.query(
-            "UPDATE bookings SET status = 'confirmed' WHERE id = $1 RETURNING *",
-            [id]
-        );
-        res.status(200).json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: "Erreur lors de l'acceptation" });
-    }
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      "UPDATE bookings SET status = 'confirmed' WHERE id = $1 RETURNING *",
+      [id]
+    );
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Erreur lors de l'acceptation" });
+  }
 };
 
 // Refuser la requête
 exports.declineBooking = async (req, res) => {
-    const { id } = req.params;
-    try {
-        await db.query("DELETE FROM bookings WHERE id = $1", [id]);
-        res.status(200).json({ message: "Réservation supprimée" });
-    } catch (err) {
-        res.status(500).json({ error: "Erreur lors du refus" });
-    }
+  const { id } = req.params;
+  try {
+    await db.query("DELETE FROM bookings WHERE id = $1", [id]);
+    res.status(200).json({ message: "Réservation supprimée" });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur lors du refus" });
+  }
 };
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /dashboard/client/:userId
@@ -264,41 +264,57 @@ exports.getClientDashboard = catchAsync(async (req, res, next) => {
   }
   const clientId = clientRes.rows[0].id;
 
-  // Stats globales client
   const statsRes = await db.query(`
     SELECT
-      COUNT(*)                                                          AS total_bookings,
-      COUNT(*) FILTER (WHERE status = 'completed')                     AS completed_jobs,
-      COUNT(*) FILTER (WHERE status IN
-        ('pending','confirmed','in-progress'))                          AS active_bookings,
-      COALESCE(SUM(amount) FILTER (WHERE status = 'completed'), 0)     AS total_spent,
-      (SELECT ROUND(AVG(rating)::numeric,1)
-       FROM reviews WHERE client_id = $1)                              AS avg_rating_given
+      COALESCE(SUM(amount) FILTER (WHERE status = 'completed'), 0) AS total_spent,
+      COUNT(*) FILTER (WHERE status = 'completed')                 AS completed_jobs,
+      COUNT(*) FILTER (WHERE status IN ('pending','confirmed','in-progress')) AS active_bookings,
+      (SELECT COUNT(*) FROM tasks WHERE client_id = $1)            AS posted_tasks
     FROM bookings
     WHERE client_id = $1
   `, [clientId]);
+  console.log("🚀 ~ statsRes:", statsRes)
 
-  // 5 prochains bookings avec infos provider
-  const bookingsRes = await db.query(`
+  const tasksRes = await db.query(`
     SELECT
-      b.*,
-      s.name          AS service_name,
-      u.name          AS provider_name,
-      u.profile_image AS provider_image
-    FROM bookings b
-    JOIN services  s ON b.service_id  = s.id
-    JOIN providers p ON s.provider_id = p.id
-    JOIN users     u ON p.user_id     = u.id
-    WHERE b.client_id = $1
-    ORDER BY b.date ASC
-    LIMIT 5
+      t.id,
+      t.title,
+      t.category,
+      t.created_at AS date,
+      t.status,
+      t.image_url AS image,
+      COALESCE(
+        (SELECT COUNT(*) FROM proposals WHERE task_id = t.id),
+        0
+      ) AS applicants
+    FROM tasks t
+    WHERE t.client_id = $1
+    ORDER BY t.created_at DESC
   `, [clientId]);
+  console.log("🚀 ~ tasksRes:", tasksRes)
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const tasks = tasksRes.rows.map(task => ({
+    ...task,
+    date: formatDate(task.date),
+    status: task.status || 'open',
+    image: task.image || null
+  }));
 
   res.status(200).json({
     status: 'success',
     data: {
-      stats: statsRes.rows[0],
-      bookings: bookingsRes.rows,
-    },
+      stats: {
+        totalSpent: statsRes.rows[0].total_spent,
+        completedJobs: statsRes.rows[0].completed_jobs,
+        activeBookings: statsRes.rows[0].active_bookings,
+        postedTasks: statsRes.rows[0].posted_tasks
+      },
+      appliedTasks: tasks
+    }
   });
 });

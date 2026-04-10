@@ -1,3 +1,61 @@
+const pool = require('../../db');
+const catchAsync = require('../utils/catchAsync');
+const ApiError = require('../utils/apiError');
+
+const getClientId = async (userId) => {
+  const res = await pool.query('SELECT id FROM clients WHERE user_id = $1', [userId]);
+  return res.rows[0]?.id ?? null;
+};
+
+const uploadTaskImage = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ApiError('No image file provided', 400));
+  }
+  const image_url = `/uploads/tasks/${req.file.filename}`;
+  res.status(200).json({ image_url });
+});
+
+const createTask = catchAsync(async (req, res, next) => {
+  const { title, description, category, location } = req.body;
+  if (!title) {
+    return res.status(400).json({ message: 'Title is required' });
+  }
+
+  if (!description || description.trim().length < 10) {
+    return res.status(400).json({ message: 'Description must be at least 10 characters' });
+  }
+  const clientId = await getClientId(req.user.id);
+  if (!clientId) {
+    return next(new ApiError('Client profile not found. Please complete your profile.', 404));
+  }
+
+  let image_url = null;
+  if (req.file) {
+    image_url = `/uploads/tasks/${req.file.filename}`;
+  }
+
+  const query = `
+    INSERT INTO tasks (client_id, title, description, category, location, image_url, status)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING *
+  `;
+
+  const values = [
+    clientId,
+    title,
+    description,
+    category || null,
+    location || null,
+    image_url,
+    'open'
+  ];
+  console.log("🚀 ~ values:", values)
+
+  const { rows } = await pool.query(query, values);
+
+  res.status(201).json(rows[0]);
+});
+
 const {
   getAllTasks,
   getTaskById,
@@ -34,4 +92,6 @@ const fetchTasksById = async (req, res) => {
 module.exports = {
   fetchAllTasks,
   fetchTasksById,
+  createTask,
+  uploadTaskImage,
 };
