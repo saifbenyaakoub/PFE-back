@@ -4,8 +4,31 @@ const userModel = require("../models/user");
 const clientModel = require("../models/client");
 const providerModel = require("../models/provider");
 const serviceModel = require("../models/service");
+const adminModel = require("../models/admin");
 
 const JWT_SECRET = process.env.JWT_SECRET || "0123456789";
+
+exports.signupAdmin = async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        const existingUser = await userModel.findByEmail(email);
+        if (existingUser) {
+            return res.status(400).json({ error: "Email already in use." });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await userModel.createUser(name, email, hashedPassword, "admin");
+        await adminModel.createAdmin(user.id);
+
+        const token = jwt.sign({ userId: user.id, email: user.email, role: "admin" }, JWT_SECRET, { expiresIn: "10h" });
+
+        res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: "admin" } });
+    } catch (error) {
+        console.error("SIGNUP ADMIN ERROR:", error.message, error.stack);
+        res.status(500).json({ error: "Server error during signup" });
+    }
+};
 
 exports.signupClient = async (req, res) => {
     try {

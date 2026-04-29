@@ -9,6 +9,7 @@ const getAllServices = async () => {
       s.description,
       s.category,
       u.name AS provider_name,
+      u.id AS provider_id, -- Required for chat and bookings
       p.city AS city
     FROM services s
     JOIN providers p ON s.provider_id = p.id
@@ -27,6 +28,7 @@ const getServiceById = async (id) => {
       s.description,
       s.category,
       u.name AS provider_name,
+      u.id AS provider_id, -- Required for chat and bookings
       p.city AS city
     FROM services s
     JOIN providers p ON s.provider_id = p.id

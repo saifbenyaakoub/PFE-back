@@ -9,6 +9,7 @@ const getAllTasks = async () => {
   t.category,
   t.status,
   u.name AS client_name,
+  u.id AS client_id, /* 👈 Added this line so the frontend can use it for the chat */
   c.city AS city
 FROM tasks t
 JOIN clients c ON t.client_id = c.id
@@ -27,6 +28,7 @@ const getTaskById = async (id) => {
       t.category,
       t.status,
       u.name AS client_name,
+      u.id AS client_id, /* 👈 Added this line here too */
       c.city AS city
     FROM tasks t
     JOIN clients c ON t.client_id = c.id

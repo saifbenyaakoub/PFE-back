@@ -142,3 +142,7 @@ ALTER TABLE messages
 ADD COLUMN status VARCHAR(50)
 CHECK (status IN ('pending', 'accepted', 'declined'))
 DEFAULT 'pending';
+
+
+ALTER TABLE users DROP CONSTRAINT users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('client', 'provider', 'admin'));
