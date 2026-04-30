@@ -83,7 +83,6 @@ CREATE TABLE bookings (
     provider_id INTEGER 
         REFERENCES providers(id) ON DELETE CASCADE
     date DATE NOT NULL,
-    time TIME NOT NULL,
     details TEXT,
     status VARCHAR(50) DEFAULT 'pending'
         CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
@@ -146,3 +145,4 @@ DEFAULT 'pending';
 
 ALTER TABLE users DROP CONSTRAINT users_role_check;
 ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('client', 'provider', 'admin'));
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS service_id INTEGER REFERENCES services(id);

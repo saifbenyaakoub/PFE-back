@@ -75,6 +75,7 @@ const chatController = {
   async respondToQuotation(req, res) {
     try {
       const { messageId, content, receiverId, senderId, conversationId } = req.body;
+      console.log('respondToQuotation body:', { messageId, receiverId, senderId, conversationId });
 
       const updatedMessage = await ChatModel.updateQuotationStatus(messageId, content);
 
@@ -84,6 +85,9 @@ const chatController = {
         parsedContent = JSON.parse(content);
         statusLabel   = parsedContent.status;
       } catch (e) { statusLabel = content; }
+       console.log('statusLabel:', statusLabel);
+    console.log('parsedContent:', parsedContent);
+
 
       if (receiverId && senderId) {
         await ChatModel.createNotification(
@@ -98,19 +102,33 @@ const chatController = {
           const convRes  = await pool.query(
             'SELECT service_id FROM conversations WHERE id = $1', [conversationId]
           );
-          const serviceId = convRes.rows[0]?.service_id;
+          console.log('conversation row:', convRes.rows[0]);
 
-          await ChatModel.createBookingFromQuotation(
-            senderId,               // client user_id
-            receiverId,             // provider user_id
-            parsedContent.startDate,
-            parsedContent.amount,
-            serviceId
-          );
+          const serviceId = convRes.rows[0]?.service_id;
+          console.log('Creating booking with:', { senderId, receiverId, startDate: parsedContent.startDate, amount: parsedContent.amount, serviceId });
+
+          const booking = await ChatModel.createBookingFromQuotation(
+              senderId,
+              receiverId,
+              parsedContent.startDate,
+              parsedContent.amount,
+              serviceId
+            );
+          console.log('Booking created:', booking);
+
         } catch (bookingErr) {
+          console.error('Full error:', bookingErr);
           console.error('Booking creation failed:', bookingErr.message);
         }
-      }
+      }else {
+      // LOG 7 — why we skipped booking creation
+      console.log('Skipped booking creation because:', {
+        isAccepted: statusLabel === 'accepted',
+        hasParsedContent: !!parsedContent,
+        hasConversationId: !!conversationId
+      });
+    }
+
 
       res.json(updatedMessage);
     } catch (err) {

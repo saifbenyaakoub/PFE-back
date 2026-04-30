@@ -113,24 +113,18 @@ const ChatModel = {
   },
 
   async createBookingFromQuotation(clientUserId, providerUserId, startDate, amount, serviceId) {
-    const clientRes   = await pool.query('SELECT id FROM clients   WHERE user_id = $1', [clientUserId]);
-    const providerRes = await pool.query('SELECT id FROM providers WHERE user_id = $1', [providerUserId]);
+  if (!serviceId) throw new Error('No service linked to this conversation');
 
-    const clientId   = clientRes.rows[0]?.id;
-    const providerId = providerRes.rows[0]?.id;
+  console.log('Inserting booking with:', { serviceId, clientUserId, providerUserId, startDate, amount });
 
-    if (!clientId)   throw new Error('Client profile not found');
-    if (!providerId) throw new Error('Provider profile not found');
-    if (!serviceId)  throw new Error('No service linked to this conversation');
+  const { rows } = await pool.query(`
+    INSERT INTO bookings (service_id, client_id, provider_id, date, amount, status, created_at)
+    VALUES ($1, $2, $3, $4, $5, 'confirmed', NOW())
+    RETURNING *
+  `, [serviceId, clientUserId, providerUserId, startDate, amount]);
 
-    const { rows } = await pool.query(`
-      INSERT INTO bookings (service_id, client_id, provider_id, date, amount, status, created_at)
-      VALUES ($1, $2, $3, $4, $5, 'confirmed', NOW())
-      RETURNING *
-    `, [serviceId, clientId, providerId, startDate, amount]);
-
-    return rows[0];
-  },
+  return rows[0];
+}
 };
 
 module.exports = ChatModel;

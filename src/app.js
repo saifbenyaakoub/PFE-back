@@ -15,7 +15,7 @@ const authRoutes = require("./auth");
 const profileRoutes = require("./routes/profileRouter");
 const chatRouter = require("./routes/chatRouter");
 const adminRouter = require("./routes/adminRouter");
-
+const aiRoutes = require("./routes/aiRouter");
 const bookingsRoutes  = require('./routes/bookings');
 const servicesRoutes  = require('./routes/services');
 const reviewsRoutes   = require('./routes/reviews');
@@ -38,6 +38,7 @@ app.use('/bookings',  authenticateToken, bookingsRoutes);
 app.use('/services',  authenticateToken, servicesRoutes);
 app.use('/reviews',   authenticateToken, reviewsRoutes);
 app.use('/dashboard', authenticateToken, dashboardRoutes);
+app.use("/ai", aiRoutes);
 
 const server = http.createServer(app);
 
