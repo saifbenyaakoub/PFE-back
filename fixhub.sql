@@ -6,6 +6,8 @@ CREATE TABLE users (
     email CITEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     profile_image TEXT,
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
     role VARCHAR(50) NOT NULL CHECK (role IN ('client', 'provider')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -71,11 +73,15 @@ CREATE INDEX idx_providers_user_id ON providers(user_id);
 
 CREATE TABLE bookings (
     id SERIAL PRIMARY KEY,
-    service_id INTEGER NOT NULL
+    service_id INTEGER
         REFERENCES services(id) ON DELETE CASCADE,
+    task_id INTEGER 
+        REFERENCES tasks(id) ON DELETE CASCADE,
     amount DECIMAL(10,2),
     client_id INTEGER NOT NULL
         REFERENCES clients(id) ON DELETE CASCADE,
+    provider_id INTEGER 
+        REFERENCES providers(id) ON DELETE CASCADE
     date DATE NOT NULL,
     time TIME NOT NULL,
     details TEXT,
@@ -83,7 +89,12 @@ CREATE TABLE bookings (
         CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
+ALTER TABLE bookings
+ADD CONSTRAINT check_booking_origin 
+CHECK (
+    (service_id IS NOT NULL AND task_id IS NULL) OR 
+    (service_id IS NULL AND task_id IS NOT NULL AND provider_id IS NOT NULL)
+);
 CREATE TABLE reviews (
   id          SERIAL PRIMARY KEY,
   booking_id  INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
@@ -111,7 +122,7 @@ CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    text TEXT NOT NULL,
+    content TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

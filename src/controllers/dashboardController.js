@@ -55,20 +55,19 @@ exports.getStats = catchAsync(async (req, res, next) => {
         AND b.status IN ('pending', 'confirmed', 'in-progress')
     `, [providerId]);
 
-    // Moyenne des avis + nombre total
     const ratingRes = await db.query(`
   SELECT
     COALESCE(ROUND(AVG(r.rating)::numeric, 1), 0) AS avg_rating,
-    COUNT(r.id) AS total_reviews,
-    COUNT(*) FILTER (WHERE r.rating = 5) AS five_star,
-    COUNT(*) FILTER (WHERE r.rating = 4) AS four_star,
-    COUNT(*) FILTER (WHERE r.rating = 3) AS three_star,
-    COUNT(*) FILTER (WHERE r.rating = 2) AS two_star,
-    COUNT(*) FILTER (WHERE r.rating = 1) AS one_star
+    COUNT(r.id)::int AS total_reviews,
+    COUNT(r.id) FILTER (WHERE r.rating = 5)::int AS five_star,
+    COUNT(r.id) FILTER (WHERE r.rating = 4)::int AS four_star,
+    COUNT(r.id) FILTER (WHERE r.rating = 3)::int AS three_star,
+    COUNT(r.id) FILTER (WHERE r.rating = 2)::int AS two_star,
+    COUNT(r.id) FILTER (WHERE r.rating = 1)::int AS one_star
   FROM reviews r
   JOIN bookings b ON b.id = r.booking_id
-  JOIN services s ON s.id = b.service_id
-  WHERE s.provider_id = $1
+  LEFT JOIN services s ON s.id = b.service_id
+  WHERE (s.provider_id = $1 OR b.provider_id = $1)
 `, [providerId]);
 
     return res.status(200).json({
@@ -259,49 +258,56 @@ exports.getClientDashboard = catchAsync(async (req, res, next) => {
   const clientRes = await db.query(
     'SELECT id FROM clients WHERE user_id = $1', [userId]
   );
+
   if (clientRes.rows.length === 0) {
     return next(new ApiError('Client non trouvé', 404));
   }
   const clientId = clientRes.rows[0].id;
 
+
   const statsRes = await db.query(`
-    SELECT
-      COALESCE(SUM(amount) FILTER (WHERE status = 'completed'), 0) AS total_spent,
-      COUNT(*) FILTER (WHERE status = 'completed')                 AS completed_jobs,
-      COUNT(*) FILTER (WHERE status IN ('pending','confirmed','in-progress')) AS active_bookings,
-      (SELECT COUNT(*) FROM tasks WHERE client_id = $1)            AS posted_tasks
-    FROM bookings
-    WHERE client_id = $1
+    SELECT 
+      (SELECT COALESCE(SUM(amount), 0) FROM bookings WHERE client_id = $1 AND status = 'completed') AS total_spent,
+      (SELECT COUNT(*) FROM tasks WHERE client_id = $1 AND status = 'completed') AS completed_jobs,
+      (SELECT COUNT(*) FROM bookings WHERE client_id = $1 AND status IN ('pending', 'confirmed')) AS active_bookings,
+      (SELECT COUNT(*) FROM tasks WHERE client_id = $1) AS total_posted_tasks
+    FROM clients WHERE id = $1
   `, [clientId]);
-  console.log("🚀 ~ statsRes:", statsRes)
 
   const tasksRes = await db.query(`
-    SELECT
-      t.id,
-      t.title,
-      t.category,
-      t.created_at AS date,
-      t.status,
-      t.image_url AS image,
-      COALESCE(
-        (SELECT COUNT(*) FROM proposals WHERE task_id = t.id),
-        0
-      ) AS applicants
-    FROM tasks t
-    WHERE t.client_id = $1
-    ORDER BY t.created_at DESC
-  `, [clientId]);
-  console.log("🚀 ~ tasksRes:", tasksRes)
+  SELECT 
+    t.id, 
+    t.title, 
+    t.category, 
+    t.created_at AS date, 
+    t.status, 
+    t.image_url AS image,
+    COUNT(p.id)::int AS applicants,
+    b.id AS booking_id,
+    u.name AS provider_name,
+    (SELECT COUNT(*) FROM reviews WHERE booking_id = b.id)::int > 0 AS has_reviewed
+
+  FROM tasks t
+  LEFT JOIN proposals p ON t.id = p.task_id
+  LEFT JOIN bookings b ON t.id = b.task_id AND b.client_id = t.client_id
+  LEFT JOIN providers prov ON b.provider_id = prov.id
+  LEFT JOIN users u ON prov.user_id = u.id
+  WHERE t.client_id = $1
+  GROUP BY t.id, b.id, u.name
+  ORDER BY t.created_at DESC
+`, [clientId]);
 
   const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const tasks = tasksRes.rows.map(task => ({
     ...task,
     date: formatDate(task.date),
-    status: task.status || 'open',
     image: task.image || null
   }));
 
@@ -309,10 +315,10 @@ exports.getClientDashboard = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       stats: {
-        totalSpent: statsRes.rows[0].total_spent,
-        completedJobs: statsRes.rows[0].completed_jobs,
-        activeBookings: statsRes.rows[0].active_bookings,
-        postedTasks: statsRes.rows[0].posted_tasks
+        totalSpent: parseFloat(statsRes.rows[0]?.total_spent || 0),
+        completedJobs: parseInt(statsRes.rows[0]?.completed_jobs || 0),
+        activeBookings: parseInt(statsRes.rows[0]?.active_bookings || 0),
+        postedTasks: parseInt(statsRes.rows[0]?.total_posted_tasks || 0)
       },
       appliedTasks: tasks
     }

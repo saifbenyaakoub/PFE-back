@@ -10,7 +10,7 @@ exports.getProfile = async (req, res) => {
         }
 
    
-        const result = await pool.query("SELECT id, name, email, role, profile_image FROM users WHERE id = $1", [userId]);
+        const result = await pool.query("SELECT id, name, email, role, profile_image, latitude, longitude FROM users WHERE id = $1", [userId]);
       
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "User not found" });
@@ -22,7 +22,9 @@ exports.getProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            profileImage: user.profile_image ? `http://localhost:5000/uploads/${user.profile_image}` : null
+            profileImage: user.profile_image ? `http://localhost:5000/uploads/${user.profile_image}` : null,
+            latitude: user.latitude || '',
+            longitude: user.longitude || ''
         };
 
         switch (user.role) {
@@ -52,10 +54,10 @@ exports.updateProfile = async (req, res) => {
     try {
        const {userId}=req.params;
         
-        const { name, email, city, categories,role } = req.body;
+        const { name, email, city, categories, role, latitude, longitude } = req.body;
         
 
-        await pool.query("UPDATE users SET name = $1, email = $2 WHERE id = $3", [name, email, userId]);
+        await pool.query("UPDATE users SET name = $1, email = $2, latitude = $3, longitude = $4 WHERE id = $5", [name, email, latitude, longitude, userId]);
 
         switch (role) {
             case 'client':

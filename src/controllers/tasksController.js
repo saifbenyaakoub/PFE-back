@@ -49,13 +49,30 @@ const createTask = catchAsync(async (req, res, next) => {
     image_url,
     'open'
   ];
-  console.log("🚀 ~ values:", values)
 
   const { rows } = await pool.query(query, values);
 
   res.status(201).json(rows[0]);
 });
 
+const deleteTask = catchAsync(async (req, res, next) => {
+  const { taskId } = req.params;
+  const { userId } = req.user;
+
+  const clientRes = await pool.query('SELECT id FROM clients WHERE user_id = $1', [userId]);
+  const clientId = clientRes.rows[0].id;
+
+  const result = await pool.query(
+    'DELETE FROM tasks WHERE id = $1 AND client_id = $2 RETURNING *',
+    [taskId, clientId]
+  );
+
+  if (result.rowCount === 0) {
+    return next(new ApiError('Tâche non trouvée ou non autorisée', 404));
+  }
+
+  res.status(204).json({ status: 'success', data: null });
+});
 const {
   getAllTasks,
   getTaskById,
@@ -93,5 +110,6 @@ module.exports = {
   fetchAllTasks,
   fetchTasksById,
   createTask,
+  deleteTask,
   uploadTaskImage,
 };

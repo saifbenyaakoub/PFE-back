@@ -7,6 +7,6 @@ router.get("/provider/:userId",authenticateToken, reviewsController.getProviderR
 
 router.get("/summary/:userId",authenticateToken, reviewsController.getRatingSummary);
  
-router.post("/",authenticateToken, reviewsController.submitReview);
+router.post('/', authenticateToken, reviewsController.createReview);
 
 module.exports = router;

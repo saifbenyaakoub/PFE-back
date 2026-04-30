@@ -18,11 +18,11 @@ const upload = multer({
     else cb(new Error('Only image files are allowed'), false);
   },
 });
-/*5dmet fristo*/
 const {
   fetchAllTasks,
   fetchTasksById,
   createTask,
+  deleteTask,
   uploadTaskImage
 } = require("../controllers/tasksController");
 
@@ -32,4 +32,5 @@ router.post('/upload-image', authenticateToken, upload.single('image'), ctrl.upl
 
 // tasksRouter.js
 router.post('/', authenticateToken, upload.single('image'), ctrl.createTask);
+router.delete('/:taskId', authenticateToken,ctrl.deleteTask);
 module.exports = router;
