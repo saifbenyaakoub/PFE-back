@@ -52,20 +52,7 @@ CREATE TABLE tasks (
     CONSTRAINT tasks_status_check CHECK (status IN ('open', 'in_progress', 'completed', 'cancelled')),
     CONSTRAINT tasks_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
 );
-CREATE TABLE proposals (
-  id          SERIAL PRIMARY KEY,
-  task_id     INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-  provider_id INTEGER NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
-  amount      DECIMAL(10,2),                    
-  message     TEXT,                             
-  status      VARCHAR(20) DEFAULT 'pending',    
-  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(task_id, provider_id)                   
-);
 
-CREATE INDEX idx_proposals_task_id ON proposals(task_id);
-CREATE INDEX idx_proposals_provider_id ON proposals(provider_id);
 
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_clients_user_id ON clients(user_id);

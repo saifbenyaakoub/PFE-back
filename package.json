@@ -12,17 +12,19 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^2.4.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "groq-sdk": "^1.2.0",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
+    "nodemon": "^3.1.14",
     "pg": "^8.18.0",
     "socket.io": "^4.8.3",
-        "nodemon": "^3.1.14"
+    "weave": "^0.14.0"
   },
   "repository": {
     "type": "git",

@@ -12,7 +12,7 @@ const getProviderId = async (userId) => {
 // GET /services
 exports.getAllServices = catchAsync(async (req, res) => {
   const { rows } = await db.query(`
-    SELECT s.*, u.name AS provider_name, p.city,
+    SELECT s.*, u.name AS provider_name, u.profile_image AS "profileImage", p.city,
     ROUND(AVG(r.rating)::numeric, 1) AS avg_rating
     FROM services s
     JOIN providers p ON p.id = s.provider_id
@@ -20,22 +20,21 @@ exports.getAllServices = catchAsync(async (req, res) => {
     LEFT JOIN bookings b ON b.service_id = s.id
     LEFT JOIN reviews r ON r.booking_id = b.id
     WHERE s.is_active = true
-    GROUP BY s.id, u.name, p.city
+    GROUP BY s.id, u.name, u.profile_image, p.city
     ORDER BY s.created_at DESC
   `);
   res.status(200).json({ status: 'success', results: rows.length, data: rows });
 });
 
-// GET /services/category/:category
 exports.getByCategory = catchAsync(async (req, res) => {
   const { category } = req.params;
   const { rows } = await db.query(`
-    SELECT s.*, u.name AS provider_name, p.city
+    SELECT s.*, u.name AS provider_name, u.profile_image AS "profileImage", p.city
     FROM services s
     JOIN providers p ON p.id = s.provider_id
     JOIN users u ON u.id = p.user_id
     WHERE s.category = $1 AND s.is_active = true
-    GROUP BY s.id, u.name, p.city
+    GROUP BY s.id, u.name, u.profile_image, p.city
   `, [category]);
   res.status(200).json({ status: 'success', data: rows });
 });

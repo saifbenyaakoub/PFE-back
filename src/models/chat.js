@@ -1,6 +1,11 @@
 const pool = require("../../db");
 
 const ChatModel = {
+  // Conversations no longer carry a task_id. Task linkage now happens
+  // per-quotation (see createBookingFromQuotation's taskId param), since a
+  // conversation isn't reliably tied to a single task — a client can have
+  // multiple simultaneously-open tasks with the same provider at once,
+  // which made conversation-level tagging ambiguous and fragile.
   async findOrCreateConversation(userId1, userId2, serviceId = null) {
     const [u1, u2] = userId1 < userId2 ? [userId1, userId2] : [userId2, userId1];
 
@@ -71,7 +76,6 @@ const ChatModel = {
     return rows;
   },
 
-  // Fixed: use parameterized query instead of string interpolation
   async updateQuotationStatus(messageId, content) {
     const result = await pool.query(
       `UPDATE messages SET content = $1 WHERE id = $2 RETURNING *`,
@@ -112,19 +116,78 @@ const ChatModel = {
     await pool.query(`UPDATE notifications SET is_read = true WHERE user_id = $1`, [userId]);
   },
 
-  async createBookingFromQuotation(clientUserId, providerUserId, startDate, amount, serviceId) {
-  if (!serviceId) throw new Error('No service linked to this conversation');
+  // bookings.client_id and bookings.provider_id both have foreign keys
+  // pointing directly at users.id (fk_client, fk_provider) — NOT at
+  // clients.id / providers.id. So clientUserId/providerUserId (both
+  // users.id values from the chat conversation participants) are inserted
+  // as-is here. Do not resolve these through the clients/providers tables.
+  //
+  // taskId links this booking back to the task it originated from (via
+  // conversations.task_id, set when "Book Now" was clicked on that task).
+  // Without it, bookings.task_id stays NULL and the client dashboard can
+  // never show a task's real live status.
+  async createBookingFromQuotation(clientUserId, providerUserId, startDate, amount, serviceId, taskId = null) {
+    if (!serviceId) throw new Error('No service linked to this conversation');
 
-  console.log('Inserting booking with:', { serviceId, clientUserId, providerUserId, startDate, amount });
+    console.log('Inserting booking with:', { serviceId, clientUserId, providerUserId, startDate, amount, taskId });
 
-  const { rows } = await pool.query(`
-    INSERT INTO bookings (service_id, client_id, provider_id, date, amount, status, created_at)
-    VALUES ($1, $2, $3, $4, $5, 'confirmed', NOW())
-    RETURNING *
-  `, [serviceId, clientUserId, providerUserId, startDate, amount]);
+    const { rows } = await pool.query(`
+      INSERT INTO bookings (service_id, client_id, provider_id, date, amount, status, task_id, created_at)
+      VALUES ($1, $2, $3, $4, $5, 'confirmed', $6, NOW())
+      RETURNING *
+    `, [serviceId, clientUserId, providerUserId, startDate, amount, taskId]);
 
-  return rows[0];
-}
+    return rows[0];
+  },
+
+  // Returns all published services belonging to the given provider user.
+  // providerUserId is a users.id (passed from session.user.id on the
+  // frontend), but services.provider_id references providers.id — same
+  // id-mismatch pattern as bookings.client_id/provider_id, so it must be
+  // resolved through the providers table first instead of used directly.
+  // services table also has no price column, so only id/title/description/
+  // category are selected — the frontend's "price" pre-fill simply has
+  // nothing to fill and falls back to an empty unit price.
+  async getProviderServices(providerUserId) {
+    const providerRes = await pool.query(
+      'SELECT id FROM providers WHERE user_id = $1', [providerUserId]
+    );
+    const providerId = providerRes.rows[0]?.id;
+    if (!providerId) return [];
+
+    const { rows } = await pool.query(
+      `SELECT id, title, description, category
+       FROM services
+       WHERE provider_id = $1
+       ORDER BY title ASC`,
+      [providerId]
+    );
+    return rows;
+  },
+
+  // Returns the given client's currently-open tasks (not completed or
+  // cancelled), so a provider can optionally link a quotation to one of
+  // them. clientUserId is a users.id; tasks.client_id is a clients.id
+  // (confirmed via tasks_client_id_fkey), so it's resolved through the
+  // clients table first — same pattern as elsewhere in the app where the
+  // two id spaces must not be conflated.
+  async getClientOpenTasks(clientUserId) {
+    const clientRes = await pool.query(
+      'SELECT id FROM clients WHERE user_id = $1', [clientUserId]
+    );
+    const clientId = clientRes.rows[0]?.id;
+    if (!clientId) return [];
+
+    const { rows } = await pool.query(
+      `SELECT id, title, category, status
+       FROM tasks
+       WHERE client_id = $1
+         AND status NOT IN ('completed', 'cancelled', 'closed')
+       ORDER BY created_at DESC`,
+      [clientId]
+    );
+    return rows;
+  },
 };
 
 module.exports = ChatModel;

@@ -1,62 +1,96 @@
 const AdminModel = require("../models/admin");
-const catchAsync = require("../utils/catchAsync");
-const ApiError = require("../utils/apiError");
 
-exports.getAllUsers = catchAsync(async (req, res) => {
-  const users = await AdminModel.getAllUsers();
-  res.status(200).json({
-    status: "success",
-    results: users.length,
-    data: users
-  });
-});
-exports.deleteUser = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  if (!id) return next(new ApiError("User ID is required", 400));
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await AdminModel.getAllUsers();
+    return res.json(users);
+  } catch (err) {
+    console.error("getAllUsers:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Empêcher l'admin de se supprimer lui-même
+    if (String(req.user.id) === String(id)) {
+      return res.status(400).json({ message: "Cannot delete your own account" });
+    }
+
     await AdminModel.deleteUser(id);
-    res.status(200).json({
-      status: "success",
-      message: "User deleted successfully"
-    });
-});
+    return res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error("deleteUser:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
+// ─── Tasks ────────────────────────────────────────────────────────────────────
 
-exports.getTasks = catchAsync(async (req, res) => {
-  const tasks = await AdminModel.getAllTasks();
-  res.status(200).json({
-    status: "success",
-    results: tasks.length,
-    data: tasks
-  });
-});
+exports.getTasks = async (req, res) => {
+  try {
+    const tasks = await AdminModel.getAllTasks();
+    return res.json(tasks);
+  } catch (err) {
+    console.error("getTasks:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
-exports.deleteTask = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  if (!id) return next(new ApiError("Task ID is required", 400));
-  
-  await AdminModel.deleteTask(id);
-  res.status(200).json({
-    status: "success",
-    message: "Task deleted successfully"
-  });
-});
+exports.deleteTask = async (req, res) => {
+  try {
+    await AdminModel.deleteTask(req.params.id);
+    return res.json({ message: "Task deleted successfully" });
+  } catch (err) {
+    console.error("deleteTask:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
-exports.getServices = catchAsync(async (req, res) => {
-  const services = await AdminModel.getAllServices();
-  res.status(200).json({
-    status: "success",
-    results: services.length,
-    data: services
-  });
-});
+// ─── Services ─────────────────────────────────────────────────────────────────
 
-exports.deleteService = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  if (!id) return next(new ApiError("Service ID is required", 400));
+exports.getServices = async (req, res) => {
+  try {
+    const services = await AdminModel.getAllServices();
+    return res.json(services);
+  } catch (err) {
+    console.error("getServices:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
-  await AdminModel.deleteService(id);
-  res.status(200).json({
-    status: "success",
-    message: "Service deleted successfully"
-  });
-});
+exports.deleteService = async (req, res) => {
+  try {
+    await AdminModel.deleteService(req.params.id);
+    return res.json({ message: "Service deleted successfully" });
+  } catch (err) {
+    console.error("deleteService:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+exports.getReports = async (req, res) => {
+  try {
+    const reports = await AdminModel.getAllReports();
+    return res.json(reports);
+  } catch (err) {
+    console.error("getReports:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.deleteReport = async (req, res) => {
+  try {
+    await AdminModel.deleteReport(req.params.id);
+    return res.json({ message: "Report deleted successfully" });
+  } catch (err) {
+    console.error("deleteReport:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

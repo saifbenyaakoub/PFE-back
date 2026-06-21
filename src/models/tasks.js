@@ -2,40 +2,45 @@ const pool = require("../../db");
 
 // Get all services
 const getAllTasks = async () => {
-  const result = await pool.query(`SELECT 
-  t.id,
-  t.title,
-  t.description,
-  t.category,
-  t.status,
-  u.name AS client_name,
-  u.id AS client_id, /* 👈 Added this line so the frontend can use it for the chat */
-  c.city AS city
-FROM tasks t
-JOIN clients c ON t.client_id = c.id
-JOIN users u ON c.user_id = u.id
-ORDER BY t.id;`);
+  const result = await pool.query(`
+  SELECT 
+    t.id,
+    t.title,
+    t.description,
+    t.category,
+    t.status,
+    t.image_url,
+    u.name           AS client_name,
+    u.id              AS client_id,
+    u.profile_image   AS client_image,
+    c.city AS city
+  FROM tasks t
+  JOIN clients c ON t.client_id = c.id
+  JOIN users   u ON c.user_id   = u.id
+  ORDER BY t.id
+`);
   return result.rows;
 };
 
 // Get service by id
 const getTaskById = async (id) => {
-  const result = await pool.query(
-    `SELECT 
-      t.id,
-      t.title,
-      t.description,
-      t.category,
-      t.status,
-      u.name AS client_name,
-      u.id AS client_id, /* 👈 Added this line here too */
-      c.city AS city
-    FROM tasks t
-    JOIN clients c ON t.client_id = c.id
-    JOIN users u ON c.user_id = u.id
-    WHERE t.id = $1`,
-    [id]
-  );
+  const result = await pool.query(`
+  SELECT 
+    t.id,
+    t.title,
+    t.description,
+    t.category,
+    t.status,
+    t.image_url,
+    u.name           AS client_name,
+    u.id              AS client_id,
+    u.profile_image   AS client_image,
+    c.city AS city
+  FROM tasks t
+  JOIN clients c ON t.client_id = c.id
+  JOIN users   u ON c.user_id   = u.id
+  WHERE t.id = $1
+`, [id]);
 
   return result.rows[0];
 };

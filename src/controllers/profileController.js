@@ -75,10 +75,11 @@ exports.updateProfile = async (req, res) => {
         res.status(500).json({ error: "Server error updating profile" });
     }
 };
-
+const toNullableFloat = (value) => {
+  return value === "" || value === undefined ? null : parseFloat(value);
+};
 exports.uploadProfileImage = async (req, res) => {
     const { userId } = req.params;
-
     try {
         
         if (!req.file) {
@@ -86,7 +87,6 @@ exports.uploadProfileImage = async (req, res) => {
         }
 
         const filename = req.file.filename;
-
     const resultQuery=    await pool.query(
             "UPDATE users SET profile_image = $1 WHERE id = $2",
             [filename, userId]

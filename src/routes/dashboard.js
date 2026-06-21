@@ -19,8 +19,7 @@ router.get('/provider/:userId/booking-requests', ctrl.getBookingRequests);
 // Dans routes/dashboard.js
 router.put('/bookings/:id/status', authenticateToken, ctrl.acceptBooking);
 router.delete('/bookings/:id', authenticateToken, ctrl.declineBooking);
-
-// GET /dashboard/client/:userId
+router.get('/provider/:userId/calendar-bookings', ctrl.getCalendarBookings);// GET /dashboard/client/:userId
 router.get('/client/:userId', ctrl.getClientDashboard);
 
 module.exports = router;

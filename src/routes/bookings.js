@@ -24,8 +24,15 @@ router.get('/client/:userId', ctrl.getClientBookings);
 // → Changer le statut (confirmed, in-progress, completed, cancelled)
 router.patch('/:id/status', ctrl.updateBookingStatus);
 
+// DELETE /bookings/:id/cancel
+// → Le client OU le prestataire annule une réservation active
+//   (confirmed / in-progress). Bloqué si déjà 'completed'.
+//   Distinct de DELETE /:id ci-dessous, qui ne gère que le refus
+//   d'une demande encore 'pending'.
+router.delete('/:id/cancel', ctrl.cancelActiveBooking);
+
 // DELETE /bookings/:id
-// → Décliner / supprimer un booking (prestataire refuse)
+// → Décliner / supprimer un booking (prestataire refuse une demande pending)
 router.delete('/:id', ctrl.deleteBooking);
 
 module.exports = router;
